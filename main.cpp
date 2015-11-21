@@ -16,20 +16,23 @@ using namespace cv;
 int main(){
 
 	cv::Mat img_original, dst;
-	//img_original = cv::imread("/home/tinyl/Images/main3.jpg");
-	//img_original = cv::imread("/home/tinyl/Images/cochon.jpg");
-	//img_original = cv::imread("/home/tinyl/Images/test.jpg");
-	img_original = cv::imread("/home/tinyl/Images/main2.jpg");
-	//img_original = cv::imread("/home/tinyl/Images/main1.png");
-	//img_original = cv::imread("/home/tinyl/Images/main.jpg");
+	dst = cv::imread("/home/tinyl/Images/groupe3.jpg");
+	//dst = cv::imread("/home/tinyl/Images/main3.jpg");
+	//dst = cv::imread("/home/tinyl/Images/cochon.jpg");
+	//dst = cv::imread("/home/tinyl/Images/test.jpg");
+	//dst = cv::imread("/home/tinyl/Images/main2.jpg");
+	//dst = cv::imread("/home/tinyl/Images/main1.png");
+	//dst = cv::imread("/home/tinyl/Images/main.jpg");
 
 	//Condition de non lecture
-		  if (img_original.empty())
+		  if (dst.empty())
 		    {
 		      std::cout << "Cannot load image!" << std::endl;
 		      return -1;
 		    }
 
+		Size size(1300,780);
+		resize(dst, img_original, size);
 	    cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
 	    cv::imshow("Original",img_original);
 	    cv::waitKey(0);
@@ -55,49 +58,41 @@ int main(){
 
 	    main_features_detect(img_YCbCr, imdetect);
 
-	    /* for(int i = 0; i < img_YCbCr.rows; i++){
-	    	for(int j=0; j < img_YCbCr.cols; j++){
-
-	    		if (float(img_YCbCr.at<Vec3b>(Point(j,i))[1])/float(img_YCbCr.at<Vec3b>(Point(j,i))[2]) > 0.65
-	    				&& float(img_YCbCr.at<Vec3b>(Point(j,i))[1])/float(img_YCbCr.at<Vec3b>(Point(j,i))[2]) < 0.8){
-	    			imdetect.at<Vec3b>(Point(j,i))[0] = 255; //bleu
-	    			imdetect.at<Vec3b>(Point(j,i))[1] = 255;	//vert
-	    			imdetect.at<Vec3b>(Point(j,i))[2] = 255;	//rouge
-
-	    		}
-
-	    	}
-	    } */
-
-
-	  /*  Mat imdetect;
-	    imdetect = Mat::zeros(img_original.rows, img_original.cols, CV_8UC3);
-
-	    Mat R;
-	    R = Mat::zeros(img_original.rows, img_original.cols, CV_8UC3);
-	    Mat G;
-	    G = Mat::zeros(img_original.rows, img_original.cols, CV_8UC3);
-	    Mat B;
-	    B = Mat::zeros(img_original.rows, img_original.cols, CV_8UC3);
-
-
-	    for(int i = 0; i < img_original.rows; i++){
-	    	for(int j=0; j < img_original.cols; j++){
-
-	    		B.at<Vec3b>(Point(j,i)) = img_original.at<Vec3b>(Point(j,i))[0];
-	    		G.at<Vec3b>(Point(j,i))[1] = img_original.at<Vec3b>(Point(j,i))[1];
-	    		R.at<Vec3b>(Point(j,i))[2] = img_original.at<Vec3b>(Point(j,i))[2];
-
-
-	    	 }
-	    }*/
 
 	    cv::namedWindow("Result", CV_WINDOW_AUTOSIZE);
 	    cv::imshow("Result",imdetect);
 	    cv::waitKey(0);
 
+	    Mat img_back_RGB;
+	    img_back_RGB = Mat::zeros(imdetect.rows, imdetect.cols, CV_8UC3);
+	    cvtColor(imdetect,img_back_RGB,CV_YCrCb2RGB);
 
-	    /// Separate the image in 3 places ( B, G and R )
+	    /*cv::namedWindow("back_RGB", CV_WINDOW_AUTOSIZE);
+	    cv::imshow("back_RGB",img_back_RGB);
+	    cv::waitKey(0);
+*/
+
+	    Mat img_gray;
+	    img_gray = Mat::zeros(imdetect.rows, imdetect.cols, CV_8UC1);
+	    cvtColor(img_back_RGB,img_gray,CV_RGB2GRAY);
+
+	    /*cv::namedWindow("gray", CV_WINDOW_AUTOSIZE);
+	    cv::imshow("gray",img_gray);
+	    cv::waitKey(0);
+	    */
+
+	    Mat img_bw; // = img_gray > 128;
+	    img_bw = Mat (img_gray.size(),img_gray.type());
+	    threshold(img_gray, img_bw, 100, 255, THRESH_BINARY);
+
+	    imwrite("image_bw.jpg", img_bw);
+	    cv::namedWindow("Binary Image", CV_WINDOW_AUTOSIZE);
+	    cv::imshow("Binary Image",img_bw);
+	    cv::waitKey(0);
+
+
+
+/*	    /// Separate the image in 3 places ( B, G and R )
 	      vector<Mat> bgr_planes;
 	      split( img_YCbCr, bgr_planes );
 
@@ -150,7 +145,7 @@ int main(){
 
 	      return 0;
 
-
+*/
 
 }
 
