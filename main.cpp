@@ -90,7 +90,60 @@ int main(){
 	    cv::imshow("Binary Image",img_bw);
 	    cv::waitKey(0);
 
+	    //Creation de l'element structurant
+	    Mat element1;
+	    element1 = Mat::zeros(3,3,CV_8UC3);
 
+
+	    for (int i = 0; i < 3 ; i ++)
+	    {
+	    	for (int j = 0 ; j < 3 ; j++)
+	    	{
+	    		element1.at < Vec3b > (Point(i, j)) = {255,255,255};
+	    	}
+	    }
+	    Mat elt_gris;
+	    elt_gris = Mat::zeros(element1.rows, element1.cols, CV_8UC1);
+	    cvtColor(element1,elt_gris,CV_RGB2GRAY);
+
+	    Mat elt_bw; // = img_gray > 128;
+	    elt_bw = Mat(elt_gris.size(),elt_gris.type());
+	    threshold(elt_gris, elt_bw, 100, 255, THRESH_BINARY);
+	    imwrite("element1.jpg", elt_bw);
+
+
+	    Mat nouvelleImage;
+	    nouvelleImage = Mat(elt_bw.size(),elt_bw.type());
+
+	    cv::dilate(img_bw,nouvelleImage,Mat(),Point(1,1),2,1,1);
+	    cv::erode(nouvelleImage,nouvelleImage,Mat(),Point(1,1),1,1,1);
+	    cv::dilate(nouvelleImage,nouvelleImage,Mat(),Point(1,1),1,1,1);
+	    cv::erode(nouvelleImage,nouvelleImage,Mat(),Point(1,1),2,1,1);
+
+	    imwrite("img_erode.jpg", nouvelleImage);
+
+	    /*int scale = 1;
+	    int delta = 0;
+	    int ddepth = CV_16S;
+	    Mat imgx;
+	    Mat imgy;
+	    cv::Sobel(nouvelleImage,imgx,ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
+	    cv::Sobel(nouvelleImage,imgy,ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
+	    convertScaleAbs( imgx, imgy );
+
+	    imwrite("imgx.jpg",imgx);
+	    imwrite("imgSobel.jpg", imgy);*/
+
+
+	    cv::Laplacian(nouvelleImage,nouvelleImage,CV_8U,3,1,0,BORDER_DEFAULT);
+	    convertScaleAbs( nouvelleImage, nouvelleImage );
+
+
+	    cv::dilate(nouvelleImage,nouvelleImage,Mat(),Point(1,1),2,1,1);
+	    cv::erode(nouvelleImage,nouvelleImage,Mat(),Point(1,1),2,1,1);
+	    cv::dilate(nouvelleImage,nouvelleImage,Mat(),Point(1,1),1,1,1);
+
+	    imwrite("imglaplacien.jpg", nouvelleImage);
 
 /*	    /// Separate the image in 3 places ( B, G and R )
 	      vector<Mat> bgr_planes;
