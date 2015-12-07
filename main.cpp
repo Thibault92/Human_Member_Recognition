@@ -16,6 +16,7 @@ using namespace cv;
 int main(){
 
 	cv::Mat img_original, dst;
+	//dst = cv::imread("/home/tinyl/Images/Rituals/DSC08075.JPG");
 	dst = cv::imread("/home/tinyl/Images/groupe3.jpg");
 	//dst = cv::imread("/home/tinyl/Images/main3.jpg");
 	//dst = cv::imread("/home/tinyl/Images/cochon.jpg");
@@ -31,7 +32,7 @@ int main(){
 		      return -1;
 		    }
 
-		Size size(1300,780);
+		Size size(1024,768);
 		resize(dst, img_original, size);
 	    cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
 	    cv::imshow("Original",img_original);
@@ -90,6 +91,7 @@ int main(){
 	    cv::imshow("Binary Image",img_bw);
 	    cv::waitKey(0);
 
+
 	    //Creation de l'element structurant
 	    Mat element1;
 	    element1 = Mat::zeros(3,3,CV_8UC3);
@@ -130,7 +132,6 @@ int main(){
 	    cv::Sobel(nouvelleImage,imgx,ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
 	    cv::Sobel(nouvelleImage,imgy,ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
 	    convertScaleAbs( imgx, imgy );
-
 	    imwrite("imgx.jpg",imgx);
 	    imwrite("imgSobel.jpg", imgy);*/
 
@@ -144,6 +145,37 @@ int main(){
 	    cv::dilate(nouvelleImage,nouvelleImage,Mat(),Point(1,1),1,1,1);
 
 	    imwrite("imglaplacien.jpg", nouvelleImage);
+	    cv::namedWindow("Laplacien", CV_WINDOW_AUTOSIZE);
+	    cv::imshow("Laplacien",nouvelleImage);
+	    cv::waitKey(0);
+
+
+	    RNG rng(12345);
+	    vector<vector<Point> > contours;
+	    vector<Vec4i> hierarchy;
+
+	    findContours( nouvelleImage, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0) );
+	    vector<vector<Point> > contours_poly( contours.size() );
+	    vector<Rect> boundRect( contours.size() );
+	    vector<Point2f>center( contours.size() );
+	    vector<float>radius( contours.size() );
+	    for( size_t i = 0; i < contours.size(); i++ )
+	       { approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
+	         boundRect[i] = boundingRect( Mat(contours_poly[i]) );
+	         cout << boundRect[i].tl() << endl;
+	         //minEnclosingCircle( contours_poly[i], center[i], radius[i] );
+	       }
+	    Mat drawing = Mat::zeros( nouvelleImage.size(), CV_8UC3 );
+	    for( size_t i = 0; i< contours.size(); i++ )
+	       {
+	         Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+	         drawContours( drawing, contours_poly, (int)i, color, 1, 8, vector<Vec4i>(), 0, Point() );
+	         rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
+	         //circle( drawing, center[i], (int)radius[i], color, 2, 8, 0 );
+	       }
+	    namedWindow( "Contours", WINDOW_AUTOSIZE );
+	    imshow( "Contours", drawing );
+	    waitKey(0);
 
 /*	    /// Separate the image in 3 places ( B, G and R )
 	      vector<Mat> bgr_planes;
