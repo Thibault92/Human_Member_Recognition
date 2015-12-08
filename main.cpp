@@ -17,12 +17,12 @@ int main(){
 
 	cv::Mat img_original, dst;
 	//dst = cv::imread("/home/tinyl/Images/Rituals/DSC08075.JPG");
-	dst = cv::imread("/home/tinyl/Images/groupe3.jpg");
+	//dst = cv::imread("/home/tinyl/Images/groupe3.jpg");
 	//dst = cv::imread("/home/tinyl/Images/main3.jpg");
 	//dst = cv::imread("/home/tinyl/Images/cochon.jpg");
 	//dst = cv::imread("/home/tinyl/Images/test.jpg");
 	//dst = cv::imread("/home/tinyl/Images/main2.jpg");
-	//dst = cv::imread("/home/tinyl/Images/main1.png");
+	dst = cv::imread("/home/tinyl/Images/main1.png");
 	//dst = cv::imread("/home/tinyl/Images/main.jpg");
 
 	//Condition de non lecture
@@ -93,20 +93,22 @@ int main(){
 
 
 	    //Creation de l'element structurant
-	    Mat element1;
-	    element1 = Mat::zeros(3,3,CV_8UC3);
+	    Mat elementStruct;
+	    elementStruct = Mat::zeros(3,3,CV_8UC3);
 
 
 	    for (int i = 0; i < 3 ; i ++)
 	    {
 	    	for (int j = 0 ; j < 3 ; j++)
 	    	{
-	    		element1.at < Vec3b > (Point(i, j)) = {255,255,255};
+	    		elementStruct.at < Vec3b > (Point(i, j))[0] = 255;
+	    		elementStruct.at < Vec3b > (Point(i, j))[1] = 255;
+	    		elementStruct.at < Vec3b > (Point(i, j))[2] = 255;
 	    	}
 	    }
 	    Mat elt_gris;
-	    elt_gris = Mat::zeros(element1.rows, element1.cols, CV_8UC1);
-	    cvtColor(element1,elt_gris,CV_RGB2GRAY);
+	    elt_gris = Mat::zeros(elementStruct.rows, elementStruct.cols, CV_8UC1);
+	    cvtColor(elementStruct,elt_gris,CV_RGB2GRAY);
 
 	    Mat elt_bw; // = img_gray > 128;
 	    elt_bw = Mat(elt_gris.size(),elt_gris.type());
@@ -114,15 +116,15 @@ int main(){
 	    imwrite("element1.jpg", elt_bw);
 
 
-	    Mat nouvelleImage;
-	    nouvelleImage = Mat(elt_bw.size(),elt_bw.type());
+	    Mat imgMorpho;
+	    imgMorpho = Mat(elt_bw.size(),elt_bw.type());
 
-	    cv::dilate(img_bw,nouvelleImage,Mat(),Point(1,1),2,1,1);
-	    cv::erode(nouvelleImage,nouvelleImage,Mat(),Point(1,1),1,1,1);
-	    cv::dilate(nouvelleImage,nouvelleImage,Mat(),Point(1,1),1,1,1);
-	    cv::erode(nouvelleImage,nouvelleImage,Mat(),Point(1,1),2,1,1);
+	    cv::dilate(img_bw,imgMorpho,Mat(),Point(1,1),2,1,1);
+	    cv::erode(imgMorpho,imgMorpho,Mat(),Point(1,1),1,1,1);
+	    cv::dilate(imgMorpho,imgMorpho,Mat(),Point(1,1),1,1,1);
+	    cv::erode(imgMorpho,imgMorpho,Mat(),Point(1,1),2,1,1);
 
-	    imwrite("img_erode.jpg", nouvelleImage);
+	    imwrite("img_erode.jpg", imgMorpho);
 
 	    /*int scale = 1;
 	    int delta = 0;
@@ -136,46 +138,59 @@ int main(){
 	    imwrite("imgSobel.jpg", imgy);*/
 
 
-	    cv::Laplacian(nouvelleImage,nouvelleImage,CV_8U,3,1,0,BORDER_DEFAULT);
-	    convertScaleAbs( nouvelleImage, nouvelleImage );
+	    cv::Laplacian(imgMorpho,imgMorpho,CV_8U,3,1,0,BORDER_DEFAULT);
+	    convertScaleAbs( imgMorpho, imgMorpho );
 
 
-	    cv::dilate(nouvelleImage,nouvelleImage,Mat(),Point(1,1),2,1,1);
-	    cv::erode(nouvelleImage,nouvelleImage,Mat(),Point(1,1),2,1,1);
-	    cv::dilate(nouvelleImage,nouvelleImage,Mat(),Point(1,1),1,1,1);
+	    cv::dilate(imgMorpho,imgMorpho,Mat(),Point(1,1),2,1,1);
+	    cv::erode(imgMorpho,imgMorpho,Mat(),Point(1,1),2,1,1);
+	    cv::dilate(imgMorpho,imgMorpho,Mat(),Point(1,1),1,1,1);
 
-	    imwrite("imglaplacien.jpg", nouvelleImage);
+	    imwrite("imglaplacien.jpg", imgMorpho);
 	    cv::namedWindow("Laplacien", CV_WINDOW_AUTOSIZE);
-	    cv::imshow("Laplacien",nouvelleImage);
+	    cv::imshow("Laplacien",imgMorpho);
 	    cv::waitKey(0);
 
 
 	    RNG rng(12345);
 	    vector<vector<Point> > contours;
 	    vector<Vec4i> hierarchy;
+	    int area = 2500;
 
-	    findContours( nouvelleImage, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+	    findContours( imgMorpho, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0) );
 	    vector<vector<Point> > contours_poly( contours.size() );
 	    vector<Rect> boundRect( contours.size() );
+	    vector<Rect> boundRectFiltre( contours.size() );
 	    vector<Point2f>center( contours.size() );
 	    vector<float>radius( contours.size() );
 	    for( size_t i = 0; i < contours.size(); i++ )
-	       { approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
+	       {
+	    	approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
 	         boundRect[i] = boundingRect( Mat(contours_poly[i]) );
-	         cout << boundRect[i].tl() << endl;
+	         cout << "Top-left" << boundRect[i].tl() << endl;
+	         cout << "Bottom-right" << boundRect[i].br() << endl;
+
+
+	        if(boundRect[i].width * boundRect[i].height > area){
+	        	boundRectFiltre[i] = boundRect[i];
+	        }
 	         //minEnclosingCircle( contours_poly[i], center[i], radius[i] );
 	       }
-	    Mat drawing = Mat::zeros( nouvelleImage.size(), CV_8UC3 );
+
+	    Mat drawing = Mat::zeros( imgMorpho.size(), CV_8UC3 );
 	    for( size_t i = 0; i< contours.size(); i++ )
 	       {
+
 	         Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
 	         drawContours( drawing, contours_poly, (int)i, color, 1, 8, vector<Vec4i>(), 0, Point() );
-	         rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
+	         rectangle( drawing, boundRectFiltre[i].tl(), boundRectFiltre[i].br(), color, 2, 8, 0 );
 	         //circle( drawing, center[i], (int)radius[i], color, 2, 8, 0 );
 	       }
 	    namedWindow( "Contours", WINDOW_AUTOSIZE );
 	    imshow( "Contours", drawing );
 	    waitKey(0);
+
 
 /*	    /// Separate the image in 3 places ( B, G and R )
 	      vector<Mat> bgr_planes;
