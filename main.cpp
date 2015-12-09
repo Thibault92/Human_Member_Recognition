@@ -21,8 +21,8 @@ int main(){
 	//dst = cv::imread("/home/tinyl/Images/main3.jpg");
 	//dst = cv::imread("/home/tinyl/Images/cochon.jpg");
 	//dst = cv::imread("/home/tinyl/Images/test.jpg");
-	//dst = cv::imread("/home/tinyl/Images/main2.jpg");
-	dst = cv::imread("/home/tinyl/Images/main1.png");
+	dst = cv::imread("/home/tinyl/Images/main2.jpg");
+	//dst = cv::imread("/home/tinyl/Images/main1.png");
 	//dst = cv::imread("/home/tinyl/Images/main.jpg");
 
 	//Condition de non lecture
@@ -172,14 +172,14 @@ int main(){
 	         cout << "Bottom-right" << boundRect[i].br() << endl;
 
 
-	        if(boundRect[i].width * boundRect[i].height > area){
-	        	boundRectFiltre[i] = boundRect[i];
-	        }
+	        //if(boundRect[i].width * boundRect[i].height > area){
+	        	//boundRectFiltre[i] = boundRect[i];
+	        //}
 	         //minEnclosingCircle( contours_poly[i], center[i], radius[i] );
 	       }
 
 	    Mat drawing = Mat::zeros( imgMorpho.size(), CV_8UC3 );
-	    for( size_t i = 0; i< contours.size(); i++ )
+	    /*for( size_t i = 0; i< contours.size(); i++ )
 	       {
 
 	         Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
@@ -189,7 +189,86 @@ int main(){
 	       }
 	    namedWindow( "Contours", WINDOW_AUTOSIZE );
 	    imshow( "Contours", drawing );
-	    waitKey(0);
+	    waitKey(0);*/
+
+		/*
+			int m1 = boundRect[0].tl().x;
+			int n1 = boundRect[0].tl().y;
+			int m2 = boundRect[0].br().x;
+			int n2 = boundRect[0].br().y;
+
+			cout << m1 << endl;
+			cout << m2 << endl;
+			cout << n1 << endl;
+			cout << n2 << endl;
+			*/
+
+		    int boolean = 1;
+
+		    std::vector<Mat*> vImage;
+
+		    for( size_t i = 0; i< contours.size(); i++ )
+		    {
+		    	boolean = 1;
+
+		    	int x1 = boundRect[i].tl().x;
+		    	int y1 = boundRect[i].tl().y;
+		    	int x2 = boundRect[i].br().x;
+		    	int y2 = boundRect[i].br().y;
+
+		    	int aire = (x2 - x1)*(y2 - y1);
+
+		    	//cout << aire << endl;
+
+
+		    	if (aire > 500)
+		    	{
+					for (size_t j=0 ; j < contours.size() ; j++)
+					{
+
+						int tempx1 = boundRect[j].tl().x;
+						int tempy1 = boundRect[j].tl().y;
+						int tempx2 = boundRect[j].br().x;
+						int tempy2 = boundRect[j].br().y;
+
+						if (x1 > tempx1 && x2 < tempx2 && y1 > tempy1 && y2 < tempy2 )
+						{
+							boolean = 0;
+
+						}
+					}
+
+					if (boolean == 1)
+					{
+						Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+						drawContours( drawing, contours_poly, (int)i, color, 1, 8, vector<Vec4i>(), 0, Point() );
+						rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
+
+						int l = x2 - x1;
+						int h = y2 - y1;
+						Mat* image = new Mat();
+						*image = Mat::zeros(l,h, THRESH_BINARY);
+
+						for (int x = 1 ; x < l-1 ; x++){
+							for (int y = 1 ; y < h-1 ; y++){
+
+								image->at < Vec3b > (Point(x, y)) = imgMorpho.at < Vec3b > (Point(x+x1, y+y1));
+							}
+						}
+
+
+						vImage.push_back(image);
+
+
+					}
+		    	}
+		    }
+
+		    imwrite("imgrogner.jpg", drawing);
+		    cv::namedWindow("Rognagne", CV_WINDOW_AUTOSIZE);
+		    cv::imshow("Rognagne",drawing);
+		    cv::waitKey(0);
+
 
 
 /*	    /// Separate the image in 3 places ( B, G and R )
