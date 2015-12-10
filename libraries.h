@@ -7,10 +7,8 @@
 
 #include <iostream>
 #include <cmath>
-#include <bitset>
 #include <string>
 #include <vector>
-#include <time.h>
 
 
 #ifndef LIBRARIES_H_

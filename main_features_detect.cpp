@@ -19,7 +19,7 @@ Mat main_features_detect(Mat img, Mat img_result){
 		    	for(int j=0; j < img.cols; j++){
 
 		    		if (float(img.at<Vec3b>(Point(j,i))[1])/float(img.at<Vec3b>(Point(j,i))[2]) > 0.60
-		    				&& float(img.at<Vec3b>(Point(j,i))[1])/float(img.at<Vec3b>(Point(j,i))[2]) < 0.9){
+		    				&& float(img.at<Vec3b>(Point(j,i))[1])/float(img.at<Vec3b>(Point(j,i))[2]) < 0.8){
 		    			img_result.at<Vec3b>(Point(j,i))[0] = 255; //bleu
 		    			img_result.at<Vec3b>(Point(j,i))[1] = 255;	//vert
 		    			img_result.at<Vec3b>(Point(j,i))[2] = 255;	//rouge

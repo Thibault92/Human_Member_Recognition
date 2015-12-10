@@ -5,17 +5,20 @@
  *      Author: tinyl
  */
 
-
 #include "libraries.h"
 #include "lib_opencv.h"
 #include "main_features_detect.hpp"
+#include "createKernel.hpp"
 
 using namespace std;
 using namespace cv;
 
 int main(){
 
+	// Loading image to analyse
+
 	cv::Mat img_original, dst;
+
 	//dst = cv::imread("/home/tinyl/Images/Rituals/DSC08075.JPG");
 	//dst = cv::imread("/home/tinyl/Images/groupe3.jpg");
 	//dst = cv::imread("/home/tinyl/Images/main3.jpg");
@@ -25,229 +28,171 @@ int main(){
 	//dst = cv::imread("/home/tinyl/Images/main1.png");
 	//dst = cv::imread("/home/tinyl/Images/main.jpg");
 
-	//Condition de non lecture
-		  if (dst.empty())
-		    {
-		      std::cout << "Cannot load image!" << std::endl;
-		      return -1;
-		    }
 
-		Size size(1024,768);
-		resize(dst, img_original, size);
-	    cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
-	    cv::imshow("Original",img_original);
-	    cv::waitKey(0);
+// ------------------------------------------   Non loading condition  -----------------------------------------------
 
-	    Mat img_YCbCr;
-	    img_YCbCr = Mat::zeros (img_original.rows, img_original.cols, CV_8UC3);
-	    cvtColor(img_original,img_YCbCr,CV_RGB2YCrCb);
+	if (dst.empty())
+	{
+		std::cout << "Cannot load image!" << std::endl;
+		return -1;
+	}
 
-	    cv::namedWindow("Modified", CV_WINDOW_AUTOSIZE);
-	    cv::imshow("Modified",img_YCbCr);
-	    cv::waitKey(0);
+// -------------------------------------------  Resizing image  ------------------------------------------------------
 
-	    cout << "Valeur YCrCb:" << img_YCbCr.at<Vec3b>(Point(35,90));
-	    cout << endl;
-	    cout << "Valeur RGB:" << img_original.at<Vec3b>(Point(35,90));
-	    cout << endl;
-	    cout << float(img_YCbCr.at<Vec3b>(Point(35,90))[1])/float(img_YCbCr.at<Vec3b>(Point(35,90))[2]);
-	    cout << endl;
+	Size size(1024,768);
+	resize(dst, img_original, size);
+
+	// Showing resized image
+	cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
+	cv::imshow("Original",img_original);
+	cv::waitKey(0);
 
 
-	    Mat imdetect;
-	    imdetect = Mat::zeros(img_YCbCr.rows, img_YCbCr.cols, CV_8UC3);
 
-	    main_features_detect(img_YCbCr, imdetect);
+// -------------------------------------------  Convert image from RGB domain to YCbCr  ------------------------------
 
+	Mat img_YCbCr = Mat::zeros (img_original.rows, img_original.cols, CV_8UC3);
+	cvtColor(img_original,img_YCbCr,CV_RGB2YCrCb);
 
-	    cv::namedWindow("Result", CV_WINDOW_AUTOSIZE);
-	    cv::imshow("Result",imdetect);
-	    cv::waitKey(0);
-
-	    Mat img_back_RGB;
-	    img_back_RGB = Mat::zeros(imdetect.rows, imdetect.cols, CV_8UC3);
-	    cvtColor(imdetect,img_back_RGB,CV_YCrCb2RGB);
-
-	    /*cv::namedWindow("back_RGB", CV_WINDOW_AUTOSIZE);
-	    cv::imshow("back_RGB",img_back_RGB);
-	    cv::waitKey(0);
-*/
-
-	    Mat img_gray;
-	    img_gray = Mat::zeros(imdetect.rows, imdetect.cols, CV_8UC1);
-	    cvtColor(img_back_RGB,img_gray,CV_RGB2GRAY);
-
-	    /*cv::namedWindow("gray", CV_WINDOW_AUTOSIZE);
-	    cv::imshow("gray",img_gray);
-	    cv::waitKey(0);
-	    */
-
-	    Mat img_bw; // = img_gray > 128;
-	    img_bw = Mat (img_gray.size(),img_gray.type());
-	    threshold(img_gray, img_bw, 100, 255, THRESH_BINARY);
-
-	    imwrite("image_bw.jpg", img_bw);
-	    cv::namedWindow("Binary Image", CV_WINDOW_AUTOSIZE);
-	    cv::imshow("Binary Image",img_bw);
-	    cv::waitKey(0);
+	cv::namedWindow("Modified", CV_WINDOW_AUTOSIZE);
+	cv::imshow("Modified",img_YCbCr);
+	cv::waitKey(0);
 
 
-	    //Creation de l'element structurant
-	    Mat elementStruct;
-	    elementStruct = Mat::zeros(3,3,CV_8UC3);
+// ------------------------------------  Thresholding image to detect first main features  --------------------------
+	Mat imdetect = Mat::zeros(img_YCbCr.rows, img_YCbCr.cols, CV_8UC3);
+	main_features_detect(img_YCbCr, imdetect);
+
+	// Showing result
+	cv::namedWindow("Result", CV_WINDOW_AUTOSIZE);
+	cv::imshow("Result",imdetect);
+	cv::waitKey(0);
 
 
-	    for (int i = 0; i < 3 ; i ++)
-	    {
-	    	for (int j = 0 ; j < 3 ; j++)
-	    	{
-	    		elementStruct.at < Vec3b > (Point(i, j))[0] = 255;
-	    		elementStruct.at < Vec3b > (Point(i, j))[1] = 255;
-	    		elementStruct.at < Vec3b > (Point(i, j))[2] = 255;
-	    	}
-	    }
-	    Mat elt_gris;
-	    elt_gris = Mat::zeros(elementStruct.rows, elementStruct.cols, CV_8UC1);
-	    cvtColor(elementStruct,elt_gris,CV_RGB2GRAY);
+// ---------------------------------------  Convert YCbCr image to a binary image  -----------------------------------
 
-	    Mat elt_bw; // = img_gray > 128;
-	    elt_bw = Mat(elt_gris.size(),elt_gris.type());
-	    threshold(elt_gris, elt_bw, 100, 255, THRESH_BINARY);
-	    imwrite("element1.jpg", elt_bw);
+	Mat img_back_RGB = Mat::zeros(imdetect.rows, imdetect.cols, CV_8UC3);
+	cvtColor(imdetect,img_back_RGB,CV_YCrCb2RGB);
+
+	Mat img_gray = Mat::zeros(imdetect.rows, imdetect.cols, CV_8UC1);
+	cvtColor(img_back_RGB,img_gray,CV_RGB2GRAY);
+
+	Mat img_bw= Mat (img_gray.size(),img_gray.type());
+	threshold(img_gray, img_bw, 100, 255, THRESH_BINARY);
+
+	cv::namedWindow("Binary Image", CV_WINDOW_AUTOSIZE);
+	cv::imshow("Binary Image",img_bw);
+	cv::waitKey(0);
 
 
-	    Mat imgMorpho;
-	    imgMorpho = Mat(elt_bw.size(),elt_bw.type());
+// ----------------------------------------------  Morphological Transformations  ------------------------------------------------
 
-	    cv::dilate(img_bw,imgMorpho,Mat(),Point(1,1),2,1,1);
-	    cv::erode(imgMorpho,imgMorpho,Mat(),Point(1,1),1,1,1);
-	    cv::dilate(imgMorpho,imgMorpho,Mat(),Point(1,1),1,1,1);
-	    cv::erode(imgMorpho,imgMorpho,Mat(),Point(1,1),2,1,1);
+	// Creating kernel
 
-	    imwrite("img_erode.jpg", imgMorpho);
+	Mat elementStruct = Mat::zeros(3,3,CV_8UC1);
+	createKernel(elementStruct, 3, 3);
 
-	    /*int scale = 1;
-	    int delta = 0;
-	    int ddepth = CV_16S;
-	    Mat imgx;
-	    Mat imgy;
-	    cv::Sobel(nouvelleImage,imgx,ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
-	    cv::Sobel(nouvelleImage,imgy,ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
-	    convertScaleAbs( imgx, imgy );
-	    imwrite("imgx.jpg",imgx);
-	    imwrite("imgSobel.jpg", imgy);*/
+	Mat imgMorpho = Mat(elementStruct.size(),elementStruct.type());
 
+	// Suppressing noise pixels
 
-	    cv::Laplacian(imgMorpho,imgMorpho,CV_8U,3,1,0,BORDER_DEFAULT);
-	    convertScaleAbs( imgMorpho, imgMorpho );
+	cv::dilate(img_bw,imgMorpho,Mat(),Point(1,1),2,1,1);
+	cv::erode(imgMorpho,imgMorpho,Mat(),Point(1,1),1,1,1);
+	cv::dilate(imgMorpho,imgMorpho,Mat(),Point(1,1),1,1,1);
+	cv::erode(imgMorpho,imgMorpho,Mat(),Point(1,1),2,1,1);
 
+	// Detecting closed contours
 
-	    cv::dilate(imgMorpho,imgMorpho,Mat(),Point(1,1),2,1,1);
-	    cv::erode(imgMorpho,imgMorpho,Mat(),Point(1,1),2,1,1);
-	    cv::dilate(imgMorpho,imgMorpho,Mat(),Point(1,1),1,1,1);
+	cv::Laplacian(imgMorpho,imgMorpho,CV_8U,3,1,0,BORDER_DEFAULT);
+	convertScaleAbs(imgMorpho, imgMorpho);
 
-	    imwrite("imglaplacien.jpg", imgMorpho);
-	    cv::namedWindow("Laplacien", CV_WINDOW_AUTOSIZE);
-	    cv::imshow("Laplacien",imgMorpho);
-	    cv::waitKey(0);
+	cv::dilate(imgMorpho,imgMorpho,Mat(),Point(1,1),2,1,1);
+	cv::erode(imgMorpho,imgMorpho,Mat(),Point(1,1),2,1,1);
+	cv::dilate(imgMorpho,imgMorpho,Mat(),Point(1,1),1,1,1);
+
+	imwrite("imglaplacien.jpg", imgMorpho);
+	cv::namedWindow("Laplacien", CV_WINDOW_AUTOSIZE);
+	cv::imshow("Laplacien",imgMorpho);
+	cv::waitKey(0);
+
+// ------------------------------------------ Creation of sub-images --------------------------------------------------
 
 
-	    RNG rng(12345);
-	    vector<vector<Point> > contours;
-	    vector<Vec4i> hierarchy;
-	    int area = 2500;
+	RNG rng(12345); // Generating random value used for colors
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	// int area = 2500;
 
 
-	    findContours( imgMorpho, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0) );
-	    vector<vector<Point> > contours_poly( contours.size() );
-	    vector<Rect> boundRect( contours.size() );
-	    vector<Rect> boundRectFiltre( contours.size() );
-	    vector<Point2f>center( contours.size() );
-	    vector<float>radius( contours.size() );
-	    for( size_t i = 0; i < contours.size(); i++ )
-	       {
-	    	approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
-	         boundRect[i] = boundingRect( Mat(contours_poly[i]) );
-	         cout << "Top-left" << boundRect[i].tl() << endl;
-	         cout << "Bottom-right" << boundRect[i].br() << endl;
+	findContours( imgMorpho, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0) );
+	vector<vector<Point> > contours_poly( contours.size() );
+	vector<Rect> boundRect( contours.size() );
+	vector<Rect> boundRectFiltre( contours.size() );
+
+	for( size_t i = 0; i < contours.size(); i++ )
+	{
+		approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
+		boundRect[i] = boundingRect( Mat(contours_poly[i]) );
+		cout << "Top-left" << boundRect[i].tl() << endl;
+		cout << "Bottom-right" << boundRect[i].br() << endl;
 
 
-	        //if(boundRect[i].width * boundRect[i].height > area){
-	        	//boundRectFiltre[i] = boundRect[i];
-	        //}
-	         //minEnclosingCircle( contours_poly[i], center[i], radius[i] );
-	       }
+		//if(boundRect[i].width * boundRect[i].height > area){
+		//	boundRectFiltre[i] = boundRect[i];
+	}
+	// }
 
-	    Mat drawing = Mat::zeros( imgMorpho.size(), CV_8UC3 );
-	    /*for( size_t i = 0; i< contours.size(); i++ )
-	       {
+	Mat drawing = Mat::zeros( imgMorpho.size(), CV_8UC3 );
 
-	         Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-	         drawContours( drawing, contours_poly, (int)i, color, 1, 8, vector<Vec4i>(), 0, Point() );
-	         rectangle( drawing, boundRectFiltre[i].tl(), boundRectFiltre[i].br(), color, 2, 8, 0 );
-	         //circle( drawing, center[i], (int)radius[i], color, 2, 8, 0 );
-	       }
-	    namedWindow( "Contours", WINDOW_AUTOSIZE );
-	    imshow( "Contours", drawing );
-	    waitKey(0);*/
+	int boolean = 1;
 
-		/*
-			int m1 = boundRect[0].tl().x;
-			int n1 = boundRect[0].tl().y;
-			int m2 = boundRect[0].br().x;
-			int n2 = boundRect[0].br().y;
+	//std::vector<Mat*> vImage;
 
-			cout << m1 << endl;
-			cout << m2 << endl;
-			cout << n1 << endl;
-			cout << n2 << endl;
-			*/
+	for( size_t i = 0; i< contours.size(); i++ ){
+		boolean = 1;
 
-		    int boolean = 1;
+		int x1 = boundRect[i].tl().x;
+		int y1 = boundRect[i].tl().y;
+		int x2 = boundRect[i].br().x;
+		int y2 = boundRect[i].br().y;
 
-		    std::vector<Mat*> vImage;
+		int aire = (x2 - x1)*(y2 - y1);
 
-		    for( size_t i = 0; i< contours.size(); i++ )
-		    {
-		    	boolean = 1;
-
-		    	int x1 = boundRect[i].tl().x;
-		    	int y1 = boundRect[i].tl().y;
-		    	int x2 = boundRect[i].br().x;
-		    	int y2 = boundRect[i].br().y;
-
-		    	int aire = (x2 - x1)*(y2 - y1);
-
-		    	//cout << aire << endl;
+		//cout << aire << endl;
 
 
-		    	if (aire > 500)
-		    	{
-					for (size_t j=0 ; j < contours.size() ; j++)
-					{
+		if (aire > 500)
+		{
+			for (size_t j=0 ; j < contours.size() ; j++)
+			{
 
-						int tempx1 = boundRect[j].tl().x;
-						int tempy1 = boundRect[j].tl().y;
-						int tempx2 = boundRect[j].br().x;
-						int tempy2 = boundRect[j].br().y;
+				int tempx1 = boundRect[j].tl().x;
+				int tempy1 = boundRect[j].tl().y;
+				int tempx2 = boundRect[j].br().x;
+				int tempy2 = boundRect[j].br().y;
 
-						if (x1 > tempx1 && x2 < tempx2 && y1 > tempy1 && y2 < tempy2 )
-						{
-							boolean = 0;
+				if (x1 > tempx1 && x2 < tempx2 && y1 > tempy1 && y2 < tempy2 )
+				{
+					boolean = 0;
 
-						}
-					}
+				}
+			}
 
-					if (boolean == 1)
-					{
-						Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-						drawContours( drawing, contours_poly, (int)i, color, 1, 8, vector<Vec4i>(), 0, Point() );
-						rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
+			if (boolean == 1)
+			{
+				Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+				drawContours( drawing, contours_poly, (int)i, color, 1, 8, vector<Vec4i>(), 0, Point() );
+				rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
+				//rectangle( drawing, boundRectFiltre[i].tl(), boundRectFiltre[i].br(), color, 2, 8, 0 );
 
-						int l = x2 - x1;
+					Mat subImage = img_original(boundRect[i]);
+					cv::namedWindow("sub", CV_WINDOW_AUTOSIZE);
+					imshow("sub", subImage);
+
+				/*int l = x2 - x1;
 						int h = y2 - y1;
 						Mat* image = new Mat();
-						*image = Mat::zeros(l,h, THRESH_BINARY);
+				 *image = Mat::zeros(l,h, THRESH_BINARY);
 
 						for (int x = 1 ; x < l-1 ; x++){
 							for (int y = 1 ; y < h-1 ; y++){
@@ -257,21 +202,22 @@ int main(){
 						}
 
 
-						vImage.push_back(image);
+						vImage.push_back(image);*/
 
 
-					}
-		    	}
-		    }
-
-		    imwrite("imgrogner.jpg", drawing);
-		    cv::namedWindow("Rognagne", CV_WINDOW_AUTOSIZE);
-		    cv::imshow("Rognagne",drawing);
-		    cv::waitKey(0);
+			}
+		}
+	}
 
 
+	// imwrite("imgrogner.jpg", drawing);
+	namedWindow( "Contours", WINDOW_AUTOSIZE );
+	imshow( "Contours", drawing );
+	waitKey(0);
 
-/*	    /// Separate the image in 3 places ( B, G and R )
+
+
+	/*	    /// Separate the image in 3 places ( B, G and R )
 	      vector<Mat> bgr_planes;
 	      split( img_YCbCr, bgr_planes );
 
@@ -324,7 +270,7 @@ int main(){
 
 	      return 0;
 
-*/
+	 */
 
 }
 

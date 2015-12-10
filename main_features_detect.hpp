@@ -6,7 +6,6 @@
  */
 
 #include "lib_opencv.h"
-#include "libraries.h"
 
 using namespace cv;
 using namespace std;
