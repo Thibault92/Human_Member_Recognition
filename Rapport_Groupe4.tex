@@ -1,0 +1,68 @@
+\documentclass[10pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[francais]{babel}
+\usepackage{hyperref}
+\renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\thesubsection}{\arabic{section}}
+\usepackage[T1]{fontenc}
+
+\begin{document}
+
+\title{Reconnaissance de membres humains\\
+Projet C++}
+\author{BERGER Thibault - SIZUN Pierre - TARLET Emilie - THAMBU Prathipan}
+\date{15 d\'ecembre 2015}
+\maketitle
+
+\begin{abstract}
+L'objectif de ce module informatique a pour but de nous familiariser avec le langage C++, et notamment par l'utilisation de la bibliothèque OpenCV, axée sur le traitement d'image.
+Lors de ce projet, une application de reconnaissance de membres humain a été développée sous l'environnement de développement Eclipse.\\
+\newline
+Versions d'Eclipse: Juno (3.8), Mars (5.1)\\
+Version d'OpenCV: 3.0
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+
+\section{Cahier des charges}
+
+L'application doit pouvoir reconnaître une main sur n’importe quel fond.  Pour cela, est nécessaire :\\
+
+	- D'utiliser un traitement adapté à la main afin de détecter au mieux ses contours
+	
+	- Concevoir un algorithme qui permettra d’estimer si il y a bien une main sur une image 
+	
+	- Extraire la main de l’image afin de ne conserver que celle-ci
+
+
+\section{Choix des algorithmes}
+
+La peau humaine étant composée de pigments de couleur caractéristiques: beiges, marrons, noir, nous sommes partis sur l'idée d'une segmentation de la peau par pigmentation. Au cours de recherches bibliographiques, nous avons constaté qu'il existe une linéarité entre les différents pigments de peau existants sur chacun des canaux du domaine RGB.\\
+Au travers de nos projets d'A2 basés sur l'OCR (Emilie, Pierre, Prathipan) ou la reconnaissance automatique de panneaux routiers (Thibault), nous avions déjà constaté que l'instensité lumineuse devenait rapidement un élément contraignant pour un bon seuillage. C'est pourquoi nous avons décidé de nous baser sur le domaine YCbCr, plus robuste aux variations d'intensité.\\
+\newline
+Une fois le seuillage déterminé et appliqué, il faut extraire les éléments détectés afin de les analyser et décider de leur rapprochement à la main. Cependant, à ce stade, malgré la robustesse du domaine YCbCr, la probabilité de présence de pixels parasites reste élevée, donc de mauvaise détection. Pour atténuer cette probabilité, il est nécessaire d'appliquer des opérations morphologiques (érosion, dilatation, ouverture, fermeture).\\
+Cette étape de tests effectuée, il reste à obtenir les contours fermés intéressants. La détection de contours peut être appréhendée de plusieurs manières:\\
+
+	- Une approche gradient avec le calcul du gradient vertical pour horizontal avec les noyaux de Prewitt ou Sobel (rajout d'un lissage précédant le calcul du gradient)
+	
+	- Une approche par filtre Laplacien.\\
+	\newline
+Le choix s'est tourné vers l'opérateur Laplacien pour plusieurs raisons:
+
+	- Dans le cas d'une détection de contours sur fond uniforme, le seuillage devient inutile, et une utilisation simple des noyaux Sobel pour extraire l'élément caractéristique aurait été suffisant.
+	
+	- Dans le cadre de notre projet, la reconnaissance de membres ne se fait pas forcément que sur fond uniforme. En effet, une main peut être aussi bien détecté sur fond blanc que sur fond bruité (herbe, cailloux, textures naturelles, ...). Pour une telle détection, les textures apportent des informations d'image inutiles pour notre objectif. D'où l'utilité d'un seuillage préliminaire.
+	
+	- Le seuillage effectué et les opérations morphologiques appliquées sont traitées sur des images binaires, donc insensibles au bruit. Le filtre Laplacien a un avantage et inconvénient majeurs: Il permet d'obtenir des contours exclusivement fermés, mais reste extrêmement sensible au bruit.\\
+	\newline
+Ainsi, grâce à l'opérateur Laplacien, tous les contours restants sont des contours fermés, qui facilitera la partie suivante, consistant à construire les cadres englobants.
+
+
+\section{Présentation des méthodes utilisées}
+
+\section{Conclusion}
+
+\end{document}
+
