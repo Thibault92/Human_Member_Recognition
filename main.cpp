@@ -17,16 +17,20 @@ int main(){
 
 	// Loading image to analyse
 
-	cv::Mat img_original, dst;
+	cv::Mat img_original, dst, tpl;
 
+	dst = cv::imread("/home/tinyl/Images/hand.jpg");
 	//dst = cv::imread("/home/tinyl/Images/Rituals/DSC08075.JPG");
 	//dst = cv::imread("/home/tinyl/Images/groupe3.jpg");
 	//dst = cv::imread("/home/tinyl/Images/main3.jpg");
 	//dst = cv::imread("/home/tinyl/Images/cochon.jpg");
 	//dst = cv::imread("/home/tinyl/Images/test.jpg");
-	dst = cv::imread("/home/tinyl/Images/main2.jpg");
+	//dst = cv::imread("/home/tinyl/Images/main2.jpg");
 	//dst = cv::imread("/home/tinyl/Images/main1.png");
 	//dst = cv::imread("/home/tinyl/Images/main.jpg");
+
+
+	tpl = cv::imread("/home/tinyl/Images/template.jpg");
 
 
 // ------------------------------------------   Non loading condition  -----------------------------------------------
@@ -133,8 +137,8 @@ int main(){
 	{
 		approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
 		boundRect[i] = boundingRect( Mat(contours_poly[i]) );
-		cout << "Top-left" << boundRect[i].tl() << endl;
-		cout << "Bottom-right" << boundRect[i].br() << endl;
+		//cout << "Top-left" << boundRect[i].tl() << endl;
+		//cout << "Bottom-right" << boundRect[i].br() << endl;
 
 
 		//if(boundRect[i].width * boundRect[i].height > area){
@@ -185,9 +189,10 @@ int main(){
 				rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
 				//rectangle( drawing, boundRectFiltre[i].tl(), boundRectFiltre[i].br(), color, 2, 8, 0 );
 
-					Mat subImage = img_original(boundRect[i]);
+				/*	Mat subImage = img_original(boundRect[i]);
+					//imwrite("imgsub.jpg", subImage);
 					cv::namedWindow("sub", CV_WINDOW_AUTOSIZE);
-					imshow("sub", subImage);
+					imshow("sub", subImage);*/
 
 				/*int l = x2 - x1;
 						int h = y2 - y1;
@@ -209,15 +214,59 @@ int main(){
 		}
 	}
 
+//--------------------------------------------------- Creating template mask  -----------------------------------------
 
-	// imwrite("imgrogner.jpg", drawing);
+	Mat tpl_YCbCr, tplDetect, tpl_back_RGB, tpl_gray;
+	tpl_YCbCr = Mat::zeros (tpl.rows, tpl.cols, CV_8UC3);
+	cvtColor(tpl,tpl_YCbCr,CV_RGB2YCrCb);
+
+	tplDetect = Mat::zeros(tpl_YCbCr.rows, tpl_YCbCr.cols, CV_8UC3);
+    main_features_detect(tpl_YCbCr, tplDetect);
+
+    tpl_back_RGB = Mat::zeros(tplDetect.rows, tplDetect.cols, CV_8UC3);
+    cvtColor(tplDetect,tpl_back_RGB,CV_YCrCb2RGB);
+    tpl_gray = Mat::zeros(tplDetect.rows, tplDetect.cols, CV_8UC1);
+    cvtColor(tpl_back_RGB,tpl_gray,CV_RGB2GRAY);
+
+	//imwrite("imgrogner.jpg", drawing);
 	namedWindow( "Contours", WINDOW_AUTOSIZE );
 	imshow( "Contours", drawing );
 	waitKey(0);
 
 
+    /// Create the result matrix
+	cv::Mat res;
+	int match_method = CV_TM_SQDIFF_NORMED;
+	int res_cols = img_gray.cols - tpl_gray.cols + 1;
+	int res_rows = img_gray.rows - tpl_gray.rows + 1;
 
-	/*	    /// Separate the image in 3 places ( B, G and R )
+	res.create( res_cols, res_rows, CV_32FC1 );
+
+	/// Do the Matching and Normalize
+	cv::matchTemplate( img_gray, tpl_gray, res, match_method );
+	normalize( res, res, 0, 1, NORM_MINMAX, -1, Mat() );
+
+	/// Localizing the best match with minMaxLoc
+	double minVal; double maxVal; Point minLoc; Point maxLoc;
+	Point matchLoc;
+
+	minMaxLoc( res, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
+
+	matchLoc = minLoc;
+
+	cout << matchLoc << endl;
+
+	/// Show me what you got
+	rectangle( img_gray, matchLoc, Point( matchLoc.x + tpl_gray.cols , matchLoc.y + tpl_gray.rows ), Scalar(0,0,255), 4, 8, 0 );
+
+	//imwrite( "result.jpg", img_gray );
+	imshow( "Matching", img_gray );
+	waitKey(0);
+
+	return 0;
+
+	/*
+		    /// Separate the image in 3 places ( B, G and R )
 	      vector<Mat> bgr_planes;
 	      split( img_YCbCr, bgr_planes );
 
@@ -268,9 +317,9 @@ int main(){
 
 	      waitKey(0);
 
-	      return 0;
+	      return 0;*/
 
-	 */
+
 
 }
 
