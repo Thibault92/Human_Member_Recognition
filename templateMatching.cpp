@@ -5,7 +5,7 @@
  *      Author: tinyl
  */
 
-
+// Based on OpenCV tutorial source Code
 #include "lib_opencv.h"
 #include "libraries.h"
 

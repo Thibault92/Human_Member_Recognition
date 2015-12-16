@@ -10,6 +10,7 @@
 #include "main_features_detect.hpp"
 #include "createKernel.hpp"
 #include "templateMatching.hpp"
+#include "colorHistogram.hpp"
 
 using namespace std;
 using namespace cv;
@@ -52,7 +53,10 @@ int main(){
 	cv::imshow("Original",img_original);
 	cv::waitKey(0);
 
+// ------------------------------------------- Calculating color Histogram ------------------------------------------
 
+	Mat histImage;
+	colorHistogram(img_original, histImage);
 
 // -------------------------------------------  Convert image from RGB domain to YCbCr  ------------------------------
 
@@ -120,7 +124,7 @@ int main(){
 	cv::imshow("Laplacien",imgMorpho);
 	cv::waitKey(0);
 
-// ------------------------------------------ Creation of sub-images --------------------------------------------------
+// ------------------------------------- Creation of bounding-boxes and thresholding them ----------------------------
 
 
 	RNG rng(12345); // Generating random value used for colors
@@ -140,18 +144,11 @@ int main(){
 		boundRect[i] = boundingRect( Mat(contours_poly[i]) );
 		//cout << "Top-left" << boundRect[i].tl() << endl;
 		//cout << "Bottom-right" << boundRect[i].br() << endl;
-
-
-		//if(boundRect[i].width * boundRect[i].height > area){
-		//	boundRectFiltre[i] = boundRect[i];
 	}
-	// }
 
 	Mat drawing = Mat::zeros( imgMorpho.size(), CV_8UC3 );
 
 	int boolean = 1;
-
-	//std::vector<Mat*> vImage;
 
 	for( size_t i = 0; i< contours.size(); i++ ){
 		boolean = 1;
@@ -188,28 +185,6 @@ int main(){
 				Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
 				drawContours( drawing, contours_poly, (int)i, color, 1, 8, vector<Vec4i>(), 0, Point() );
 				rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
-				//rectangle( drawing, boundRectFiltre[i].tl(), boundRectFiltre[i].br(), color, 2, 8, 0 );
-
-				/*	Mat subImage = img_original(boundRect[i]);
-					//imwrite("imgsub.jpg", subImage);
-					cv::namedWindow("sub", CV_WINDOW_AUTOSIZE);
-					imshow("sub", subImage);*/
-
-				/*int l = x2 - x1;
-						int h = y2 - y1;
-						Mat* image = new Mat();
-				 *image = Mat::zeros(l,h, THRESH_BINARY);
-
-						for (int x = 1 ; x < l-1 ; x++){
-							for (int y = 1 ; y < h-1 ; y++){
-
-								image->at < Vec3b > (Point(x, y)) = imgMorpho.at < Vec3b > (Point(x+x1, y+y1));
-							}
-						}
-
-
-						vImage.push_back(image);*/
-
 
 			}
 		}
@@ -234,64 +209,16 @@ int main(){
 	imshow( "Contours", drawing );
 	waitKey(0);
 
+// ------------------------------------------------ Template Matching --------------------------------------------------
+
 	templateMatching(img_gray, tpl_gray);
 	imshow( "Matching", img_gray );
 	waitKey(0);
 
-	/*
-		    /// Separate the image in 3 places ( B, G and R )
-	      vector<Mat> bgr_planes;
-	      split( img_YCbCr, bgr_planes );
-
-	      /// Establish the number of bins
-	      int histSize = 256;
-
-	      /// Set the ranges ( for B,G,R) )
-	      float range[] = { 0, 256 } ;
-	      const float* histRange = { range };
-
-	      bool uniform = true; bool accumulate = false;
-
-	      cv::Mat b_hist, g_hist, r_hist;
-
-	      /// Compute the histograms:
-	      calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate );
-	      calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate );
-	      calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate );
-
-	      // Draw the histograms for B, G and R
-	      int hist_w = 512; int hist_h = 400;
-	      int bin_w = cvRound( (double) hist_w/histSize );
-
-	      Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
-
-	      /// Normalize the result to [ 0, histImage.rows ]
-	      normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-	      normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-	      normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-
-	      /// Draw for each channel
-	      for( int i = 1; i < histSize; i++ )
-	      {
-	          line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ) ,
-	                           Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
-	                           Scalar( 255, 0, 0), 2, 8, 0  );
-	          line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ) ,
-	                           Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
-	                           Scalar( 0, 255, 0), 2, 8, 0  );
-	          line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ) ,
-	                           Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
-	                           Scalar( 0, 0, 255), 2, 8, 0  );
-	      }
-
-	      /// Display
-	      namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE );
-	      imshow("calcHist Demo", histImage );
-
-	      waitKey(0);
-
-	      return 0;*/
-
+	/*	Mat subImage = img_original(boundRect[i]);
+		//imwrite("imgsub.jpg", subImage);
+		cv::namedWindow("sub", CV_WINDOW_AUTOSIZE);
+		imshow("sub", subImage);*/
 
 
 }
