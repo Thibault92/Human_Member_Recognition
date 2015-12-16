@@ -9,6 +9,7 @@
 #include "lib_opencv.h"
 #include "main_features_detect.hpp"
 #include "createKernel.hpp"
+#include "templateMatching.hpp"
 
 using namespace std;
 using namespace cv;
@@ -233,37 +234,9 @@ int main(){
 	imshow( "Contours", drawing );
 	waitKey(0);
 
-
-    /// Create the result matrix
-	cv::Mat res;
-	int match_method = CV_TM_SQDIFF_NORMED;
-	int res_cols = img_gray.cols - tpl_gray.cols + 1;
-	int res_rows = img_gray.rows - tpl_gray.rows + 1;
-
-	res.create( res_cols, res_rows, CV_32FC1 );
-
-	/// Do the Matching and Normalize
-	cv::matchTemplate( img_gray, tpl_gray, res, match_method );
-	normalize( res, res, 0, 1, NORM_MINMAX, -1, Mat() );
-
-	/// Localizing the best match with minMaxLoc
-	double minVal; double maxVal; Point minLoc; Point maxLoc;
-	Point matchLoc;
-
-	minMaxLoc( res, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
-
-	matchLoc = minLoc;
-
-	cout << matchLoc << endl;
-
-	/// Show me what you got
-	rectangle( img_gray, matchLoc, Point( matchLoc.x + tpl_gray.cols , matchLoc.y + tpl_gray.rows ), Scalar(0,0,255), 4, 8, 0 );
-
-	//imwrite( "result.jpg", img_gray );
+	templateMatching(img_gray, tpl_gray);
 	imshow( "Matching", img_gray );
 	waitKey(0);
-
-	return 0;
 
 	/*
 		    /// Separate the image in 3 places ( B, G and R )
