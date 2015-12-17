@@ -126,6 +126,7 @@ int main(){
 
 // ------------------------------------- Creation of bounding-boxes and thresholding them ----------------------------
 
+// Creation based on OpenCV Tutorial
 
 	RNG rng(12345); // Generating random value used for colors
 	vector<vector<Point> > contours;
