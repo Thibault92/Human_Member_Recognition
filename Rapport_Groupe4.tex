@@ -3,7 +3,6 @@
 \usepackage[francais]{babel}
 \usepackage{hyperref}
 \renewcommand{\thesection}{\Roman{section}}
-\renewcommand{\thesubsection}{\arabic{section}}
 \usepackage[T1]{fontenc}
 
 \begin{document}
@@ -38,12 +37,13 @@ L'application doit pouvoir reconnaître une main sur n’importe quel fond.  Pou
 	- Extraire la main de l’image afin de ne conserver que celle-ci
 
 
-\section{Choix des algorithmes}
+\section{Présentation de l'algorithme}
+\subsection{Seuillage}
 
 La peau humaine étant composée de pigments de couleur caractéristiques: beiges, marrons, noir, nous sommes partis sur l'idée d'une segmentation de la peau par pigmentation. Au cours de recherches bibliographiques, nous avons constaté qu'il existe une linéarité entre les différents pigments de peau existants sur chacun des canaux du domaine RGB.\\
-Au travers de nos projets d'A2 basés sur l'OCR (Emilie, Pierre, Prathipan) ou la reconnaissance automatique de panneaux routiers (Thibault), nous avions déjà constaté que l'instensité lumineuse devenait rapidement un élément contraignant pour un bon seuillage. C'est pourquoi nous avons décidé de nous baser sur le domaine YCbCr, plus robuste aux variations d'intensité.\\
-\newline
-Une fois le seuillage déterminé et appliqué, il faut extraire les éléments détectés afin de les analyser et décider de leur rapprochement à la main. Cependant, à ce stade, malgré la robustesse du domaine YCbCr, la probabilité de présence de pixels parasites reste élevée, donc de mauvaise détection. Pour atténuer cette probabilité, il est nécessaire d'appliquer des opérations morphologiques (érosion, dilatation, ouverture, fermeture).\\
+Au travers de nos projets d'A2 basés sur l'OCR (Emilie, Pierre, Prathipan) ou la reconnaissance automatique de panneaux routiers (Thibault), nous avions déjà constaté que l'instensité lumineuse devenait rapidement un élément contraignant pour un bon seuillage. C'est pourquoi nous nous sommes basés sur le domaine YCbCr, plus robuste aux variations d'intensité.
+\subsection{Transformations morphologiques et extraction de contours}
+Une fois le seuillage déterminé et appliqué, il faut extraire les éléments détectés afin de les analyser et décider de leur rapprochement à la main. Cependant, à ce stade, malgré la robustesse du domaine YCbCr, la probabilité de présence de pixels parasites reste élevée, donc de mauvaises détections. Pour atténuer cette probabilité, il est nécessaire d'appliquer des opérations morphologiques (érosion, dilatation, ouverture, fermeture).\\
 Cette étape de tests effectuée, il reste à obtenir les contours fermés intéressants. La détection de contours peut être appréhendée de plusieurs manières:\\
 
 	- Une approche gradient avec le calcul du gradient vertical pour horizontal avec les noyaux de Prewitt ou Sobel (rajout d'un lissage précédant le calcul du gradient)
@@ -52,16 +52,47 @@ Cette étape de tests effectuée, il reste à obtenir les contours fermés inté
 	\newline
 Le choix s'est tourné vers l'opérateur Laplacien pour plusieurs raisons:
 
-	- Dans le cas d'une détection de contours sur fond uniforme, le seuillage devient inutile, et une utilisation simple des noyaux Sobel pour extraire l'élément caractéristique aurait été suffisant.
-	
-	- Dans le cadre de notre projet, la reconnaissance de membres ne se fait pas forcément que sur fond uniforme. En effet, une main peut être aussi bien détecté sur fond blanc que sur fond bruité (herbe, cailloux, textures naturelles, ...). Pour une telle détection, les textures apportent des informations d'image inutiles pour notre objectif. D'où l'utilité d'un seuillage préliminaire.
+	- Dans le cas d'une détection de contours sur fond uniforme, le seuillage devient inutile, et une utilisation simple des noyaux Sobel pour extraire l'élément caractéristique aurait été suffisante. Pour notre projet, la reconnaissance de membres ne se fait pas forcément que sur fond uniforme. En effet, une main peut être aussi bien détectée sur fond blanc que sur fond bruité (herbe, cailloux, textures naturelles, ...). Pour une telle détection, les textures apportent des informations d'image inutiles pour notre objectif. D'où l'utilité d'un seuillage préliminaire.
 	
 	- Le seuillage effectué et les opérations morphologiques appliquées sont traitées sur des images binaires, donc insensibles au bruit. Le filtre Laplacien a un avantage et inconvénient majeurs: Il permet d'obtenir des contours exclusivement fermés, mais reste extrêmement sensible au bruit.\\
 	\newline
-Ainsi, grâce à l'opérateur Laplacien, tous les contours restants sont des contours fermés, qui facilitera la partie suivante, consistant à construire les cadres englobants.
+Ainsi, grâce à l'opérateur Laplacien, tous les contours restants sont fermés, qui facilitera la partie suivante, consistant à construire les cadres englobants.\\
+\newline
+Une fois les traitements morphologiques effectués, l'image contient des zones fermées que nous nommerons imagettes. Chaque imagette contient des informations de forme, d'aire, de couleur, qui nous seront utiles pour la suite de notre programme. L'objectif est donc d'isoler chacune de ces formes afin de les analyser par la suite.\\
+Pour y parvenir, nous construisons donc des cadres englobants, dont la hauteur et la largeur sont déterminées par la diagonale de la forme. Cependant, les opérations morphologiques étant réalisées de manière automatique, il est possible que tous les pixels parasites ne disparaissent pas complètement, créant ainsi de nombreux cadres englobants non pertinents, et couteux en calculs.\\
+Afin de pallier à ce problème, nous avons donc effectué un filtrage sur les aires des rectangles, ne prenant en compte que les aires supérieures à 500 pixel², nous réduisant le nombre d'imagettes à 5 maximum par image.
+\subsection{Reconnaissance des imagettes}
+\subsubsection*{Template Matching}
+Chaque imagette trouvée doit maintenant être comparée avec une image de référence, afin de déterminer si la zone détectée correspond bien à une main. Nous sommes donc partis dans un premier temps sur l'algorithme statistique du Template Matching. Facile d'approche, il permet de corréler une image avec une image de référence (plus petite) et d'en ressortir un score. Si ce score est assez élevé, la forme détectée est considérée comme reconnue.\\
+Pour notre projet, le Template Matching devient un algorithme très puissant pour des photos standardisées nécessitant un même plan pour chaque membre de chaque personne. C'est sur ce type d'image que nous avons testé notre programme.\\
+Malheureusement, dès que l'environnement devient variable, cet algorithme perd en robustesse. En effet, le Template Matching ne se basant que sur une seule image de référence, les rotations et changements d'échelle du membre ne sont pas pris en compte.
+\subsubsection*{Axes d'optimisation}
+Deux possibilités s'offrent comme optimisation de reconnaissance statistique:\\
+
+- Constituer une base de donnée proposant une position spécifique pour chaque membre et les classifier. Chacun des élément parcourt un a un dans l'image et le programme associe l'élément en fonction du nombre d'élément classifié le plus présent. Cela nous permettrait ainsi, dans une optique plus lointaine, de partir sur un modèle de dictionnaire de type Sac-De-Mots.
+
+- Pour chaque imagette, récupérer des éléments caractéristiques stockées dans des matrices comme valeurs propres. C'est le principe de l'algorithme du Principal Component Analysis (PCA). Il reste cependant sensible au changement d'échelle, mais est moins couteux en calculs que le Sac-de-Mots.
 
 
-\section{Présentation des méthodes utilisées}
+\section{Fonctions utilisées}
+
+Seuillage en fonction de la couleur de la peau
+
+
+A la suite de notre étude bibliographique, nous avons pu constaté que 
+
+
+
+Transformation morphologique
+
+
+Extraction de contours grâce à l’opérateur Laplacien
+
+
+
+Template Matching
+
+Le Template Matching est une méthode pour chercher et trouver l’emplacement d’un modèle d’image dans une image plus grande. La librairie openCV comprend la fonction cv::.matchtemplate(). En bref, il superpose les deux images, fait glisser le modèle sur l’image d’entrée et compare le modèle avec la partie de l’image située en dessous du modèle.
 
 \section{Conclusion}
 
