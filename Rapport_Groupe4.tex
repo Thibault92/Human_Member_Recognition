@@ -41,7 +41,16 @@ L'application doit pouvoir reconnaître une main sur n’importe quel fond.  Pou
 \subsection{Seuillage}
 
 La peau humaine étant composée de pigments de couleur caractéristiques: beiges, marrons, noir, nous sommes partis sur l'idée d'une segmentation de la peau par pigmentation. Au cours de recherches bibliographiques, nous avons constaté qu'il existe une linéarité entre les différents pigments de peau existants sur chacun des canaux du domaine RGB.\\
-Au travers de nos projets d'A2 basés sur l'OCR (Emilie, Pierre, Prathipan) ou la reconnaissance automatique de panneaux routiers (Thibault), nous avions déjà constaté que l'instensité lumineuse devenait rapidement un élément contraignant pour un bon seuillage. C'est pourquoi nous nous sommes basés sur le domaine YCbCr, plus robuste aux variations d'intensité.
+\newline En reprenant l'exemple donné sur le tutoriel d'OpenCV, un histogramme de couleur a pu être établi, et afficher les différents clusters dont nous aurions besoin pour chaque pigment. Cependant, en fonction de l'intensité lumineuse du fond (dépendant principalement de la présence de textures ou non), certains clusters se chevauchaient avec le bruit créé par la mauvaise capture de lumière. Lors de nos projets d'A2 basés sur l'OCR (Emilie, Pierre, Prathipan) ou la reconnaissance automatique de panneaux routiers (Thibault), nous avions déjà rencontré ce type de problème, et avons décidé de nous tourner vers un domaine de couleur plus robuste à ces variations: il s'agit du domaine YCbCr.\\
+De même que pour le RGB, le domaine YCbCr se compose de 3 canaux:\\
+
+- Y, basé sur la luminance, apportant des données de variance de luminosité
+
+- Cb et Cr, deux composantes de chrominance, fournissant des données purement colorimétriques\\
+\newline
+Les pigments perçus par l'oeil humain dépendant principalement de l'intensité lumineuse alentours, le retrait de cette dernière laisse donc l'information utile aux données de chrominance, réduisant ainsi le nombre de clusters à 1.\\
+En se basant donc sur ces deux données, et par calculs de ratio, nous avons déterminé un seuil, pour lequel les valeurs utiles sont conservées entre 0.6 et 0.9. Ces valeurs de pixels sont mises à 255, les autres à 0. Enfin, l'image originale modifiée est convertie image binaire afin d'effectuer des traitements morphologiques.
+
 \subsection{Transformations morphologiques et extraction de contours}
 Une fois le seuillage déterminé et appliqué, il faut extraire les éléments détectés afin de les analyser et décider de leur rapprochement à la main. Cependant, à ce stade, malgré la robustesse du domaine YCbCr, la probabilité de présence de pixels parasites reste élevée, donc de mauvaises détections. Pour atténuer cette probabilité, il est nécessaire d'appliquer des opérations morphologiques (érosion, dilatation, ouverture, fermeture).\\
 Cette étape de tests effectuée, il reste à obtenir les contours fermés intéressants. La détection de contours peut être appréhendée de plusieurs manières:\\
@@ -76,25 +85,45 @@ Deux possibilités s'offrent comme optimisation de reconnaissance statistique:\\
 
 \section{Fonctions utilisées}
 
-Seuillage en fonction de la couleur de la peau
-
-
-A la suite de notre étude bibliographique, nous avons pu constaté que 
-
-
-
-Transformation morphologique
-
-
-Extraction de contours grâce à l’opérateur Laplacien
-
-
-
-Template Matching
-
-Le Template Matching est une méthode pour chercher et trouver l’emplacement d’un modèle d’image dans une image plus grande. La librairie openCV comprend la fonction cv::.matchtemplate(). En bref, il superpose les deux images, fait glisser le modèle sur l’image d’entrée et compare le modèle avec la partie de l’image située en dessous du modèle.
+\subsubsection{\underline{Seuillage}}
+\textbf{imread() :} charge dans une matrice les pixels de l'image voulue\\
+\newline
+\textbf{imshow() :} affiche l'image\\
+\newline
+\textbf{namedWindow() :} créé une nouvelle fenêtre pour l'affichage\\
+\newline
+\textbf{waitKey() :} instaure un temps d'attente entre les images. waitKey(0) met le programme en pause jusqu'à l'action de l'utilisateur sur une touche du clavier\\
+\newline
+\textbf{resize() :} redimensionne l'image\\
+\newline
+\textbf{cvtColor() :} convertit le domaine de couleur d'une image dans le domaine voulu\\
+\newline
+\subsubsection{\underline{Opérations Morphologiques}}
+\textbf{dilate() :} à partir d'un élement structurant, permet de dilater la zone du pixel suivant le masque\\
+\newline
+\textbf{erode() :} même principe que dilate, mais en érodant la zone autour du pixel\\
+\newline
+\textbf{Laplacian() :} applique un filtre laplacien\\
+\subsubsection{\underline{Cadres englobants}}
+\textbf{findContours() :} fonction stockant dans un vecteur des cellules de vecteurs correspondant au nombre de contours fermes. Les cellules contiennent chacune un vecteur de toutes les coordonnées des contours fermés\\
+\newline
+\textbf{approxPolyDP() :} permet d'approximer, a partir des contours fermes détectés avec findContours, la meilleure approximation polynomiale de la forme géométrique. Permet une plus grande rapidité de calcul pour la création des rectangles, et de trouver la plus grande diagonale.\\
+\newline
+\textbf{boundingRect() :} permet de créer un rectangle autour du contour fermé en fournissant le pixel supérieur gauche et le pixel inférieur droit\\
+\newline
+\textbf{drawContours() :} permet d'afficher les contours recherchés. Dans notre projet, nous affichons les contours fermes trouves dont l'aire est supérieure a 500 pixels\\
+\newline
+\textbf{rectangle() :} permet de dessiner des rectangles. Dans notre projet, ces rectangles sont dessines a partir des coordonnées des cadres déterminés auparavant.\\
+\subsubsection{\underline{Template Matching}}
+\textbf{matchTemplate() :} permet d'effectuer un template matching\\
+\newline
+\textbf{normalize() :} normalise les valeurs trouvées pour le score de corrélation par la surface de l'image\\
+\newline
+\textbf{minMaxLoc() :} permet de trouver les valeurs maximales ou minimales (dépend du modèle de template matching choisi) des différents scores de corrélation.
 
 \section{Conclusion}
-
+Ce projet nous a permis de nous familiariser avec l'environnement du C++, langage de programmation que nous ne connaissions pas jusqu'alors. Nos connaissances respectives en traitement d'image nous ont permis d'établir un algorithme efficace, malgré l'optimisation que nous pourrons apporter sur la partie reconnaissance statistique, avec l'extension au sac de mots ou au PCA.\\
+OpenCV étant une bibliothèque Open-Source, nous avons trouvé des aides sur le tutoriel fourni pour certaines parties de nos algorithmes, notamment pour le calcul d'histogrammes, utilisé pour des tests de vérification. Ces tutoriels nous ont aussi orienté sur la création des cadres englobants et l'utilisation de la fonction matchTemplate.\\
+Ainsi, ce module a pu apporter une double approche de la programmation dans le domaine de l'image: l'apprentissage du langage, et la familiarisation avec l'Open-Source, qui se développe de plus en plus en entreprise.
 \end{document}
 
