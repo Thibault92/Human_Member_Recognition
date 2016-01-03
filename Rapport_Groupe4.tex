@@ -1,4 +1,18 @@
 \documentclass[10pt,a4paper]{report}
+\usepackage[margin=3cm]{geometry}
+
+\usepackage{graphicx}
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{0.5in}
+\setlength{\headwidth}{\textwidth}
+\fancyhead[L]{ISEP - A3 - Projet C++\\Reconnaissance de Membres Humains
+}% empty left
+\fancyhead[R]{ % right
+\includegraphics[scale=0.25]{Isep-Logo.jpg}
+}
+\pagestyle{fancy}
+
 \usepackage[utf8]{inputenc}
 \usepackage[francais]{babel}
 \usepackage{hyperref}
@@ -7,11 +21,9 @@
 
 \begin{document}
 
-\title{Reconnaissance de membres humains\\
-Projet C++}
+\title{ISEP - Projet C++\\Reconnaissance de Membres Humains}
 \author{BERGER Thibault - SIZUN Pierre - TARLET Emilie - THAMBU Prathipan}
 \date{15 d\'ecembre 2015}
-\href{https://www.overleaf.com/3918882mrfmjh#/11323738/}{Lien pour exécuter le code LateX}
 \maketitle
 
 \begin{abstract}
@@ -28,13 +40,13 @@ Version d'OpenCV: 3.0
 
 \section{Cahier des charges}
 
-L'application doit pouvoir reconnaître une main sur n’importe quel fond.  Pour cela, est nécessaire :\\
+L'application doit pouvoir reconnaître une main sur n’importe quel fond.  Pour cela, il est nécessaire :\\
 
 	- D'utiliser un traitement adapté à la main afin de détecter au mieux ses contours
 	
-	- Concevoir un algorithme qui permettra d’estimer si il y a bien une main sur une image 
+	- De concevoir un algorithme qui permettra d’estimer si il y a bien une main sur une image 
 	
-	- Extraire la main de l’image afin de ne conserver que celle-ci
+	- D'extraire la main de l’image afin de ne conserver que celle-ci
 
 
 \section{Présentation de l'algorithme}
@@ -49,10 +61,10 @@ De même que pour le RGB, le domaine YCbCr se compose de 3 canaux:\\
 - Cb et Cr, deux composantes de chrominance, fournissant des données purement colorimétriques\\
 \newline
 Les pigments perçus par l'oeil humain dépendant principalement de l'intensité lumineuse alentours, le retrait de cette dernière laisse donc l'information utile aux données de chrominance, réduisant ainsi le nombre de clusters à 1.\\
-En se basant donc sur ces deux données, et par calculs de ratio, nous avons déterminé un seuil, pour lequel les valeurs utiles sont conservées entre 0.6 et 0.9. Ces valeurs de pixels sont mises à 255, les autres à 0. Enfin, l'image originale modifiée est convertie image binaire afin d'effectuer des traitements morphologiques.
+En se basant donc sur ces deux données, et par calculs de ratio, nous avons déterminé un seuil, pour lequel les valeurs utiles sont conservées entre 0.6 et 0.9. Ces valeurs de pixels sont mises à 255, les autres à 0. Enfin, l'image originale modifiée est convertie en image binaire afin d'effectuer des traitements morphologiques.
 
 \subsection{Transformations morphologiques et extraction de contours}
-Une fois le seuillage déterminé et appliqué, il faut extraire les éléments détectés afin de les analyser et décider de leur rapprochement à la main. Cependant, à ce stade, malgré la robustesse du domaine YCbCr, la probabilité de présence de pixels parasites reste élevée, donc de mauvaises détections. Pour atténuer cette probabilité, il est nécessaire d'appliquer des opérations morphologiques (érosion, dilatation, ouverture, fermeture).\\
+Une fois le seuillage déterminé et appliqué, il faut extraire les éléments détectés afin de les analyser et décider de leur rapprochement à la main. Cependant, à ce stade, malgré la robustesse du domaine YCbCr, la probabilité de présence de pixels parasites, donc de mauvaises détections, reste élevée. Pour atténuer cette probabilité, il est nécessaire d'appliquer des opérations morphologiques (érosion, dilatation, ouverture, fermeture).\\
 Cette étape de tests effectuée, il reste à obtenir les contours fermés intéressants. La détection de contours peut être appréhendée de plusieurs manières:\\
 
 	- Une approche gradient avec le calcul du gradient vertical pour horizontal avec les noyaux de Prewitt ou Sobel (rajout d'un lissage précédant le calcul du gradient)
@@ -111,9 +123,9 @@ Deux possibilités s'offrent comme optimisation de reconnaissance statistique:\\
 \newline
 \textbf{boundingRect() :} permet de créer un rectangle autour du contour fermé en fournissant le pixel supérieur gauche et le pixel inférieur droit\\
 \newline
-\textbf{drawContours() :} permet d'afficher les contours recherchés. Dans notre projet, nous affichons les contours fermes trouves dont l'aire est supérieure a 500 pixels\\
+\textbf{drawContours() :} permet d'afficher les contours recherchés. Dans notre projet, nous affichons les contours fermés trouvés dont l'aire est supérieure a 500 pixels\\
 \newline
-\textbf{rectangle() :} permet de dessiner des rectangles. Dans notre projet, ces rectangles sont dessines a partir des coordonnées des cadres déterminés auparavant.\\
+\textbf{rectangle() :} permet de dessiner des rectangles. Dans notre projet, ces rectangles sont dessinés à partir des coordonnées des cadres déterminés auparavant.\\
 \subsubsection{\underline{Template Matching}}
 \textbf{matchTemplate() :} permet d'effectuer un template matching\\
 \newline
